@@ -2,7 +2,7 @@
 
 ACHIEVEMENTS = {
     # ── 通常実績・追加実績 ──
-    "not_admin": {"name": "あなたは管理者じゃないでしょ？", "description": "鯖内で表示される名前を「ぴくせる」にして「ストゼロ」を含むメッセージを発言する。", "is_hidden": False},
+    "not_admin": {"name": "あなたは管理者じゃないでしょ？", "description": "鯖内で表示される名前を「ぴくせる。」にして「ストゼロ」を含むメッセージを発言する。", "is_hidden": False},
     "buy_anger": {"name": "怒りを買うよ？", "description": "「ぽこでん」と発言する。", "is_hidden": False},
     "private_life_manager": {"name": "私生活管理者", "description": "「ピコハン」と「ぴくせる」を含む発言をする。", "is_hidden": False},
     "osoyou": {"name": "おそよう","description": "お昼を過ぎた13時以降におはようと発言する。","is_hidden": False},
@@ -46,9 +46,9 @@ ACHIEVEMENTS = {
     "shiritori": {"name": "り……隣人！", "description": "「しりとり」と言う", "is_hidden": False},
     "dice_madness": {"name": "そんなダイス使わんやろ", "description": "100d100000と打つ", "is_hidden": False},
     # Ver.2実装実績
-   "secretive": {"name": "秘密主義", "description": "スポイラーを使用した発言をする。", "is_hidden": False},
+    "secretive": {"name": "秘密主義", "description": "スポイラーを使用した発言をする。", "is_hidden": False},
     "shadow_shadow": {"name": "Shadow Shadow", "description": "「孤独」を発言する。", "is_hidden": False},
-    "mezumizer": {"name": "メズマイライザー", "description": "「誰か助けてね」と発言する。", "is_hidden": False},
+    "mezumizer": {"name": "メズマライザー", "description": "「誰か助けてね」と発言する。", "is_hidden": False},
     "absolute_justice": {"name": "絶対ジャスティス！", "description": "「引きこもり」と発言する。", "is_hidden": False},
     "what_was_i": {"name": "あたしってなんだっけ", "description": "「わからない」と発言する。", "is_hidden": False},
     "fossil": {"name": "取り繕っていたいな", "description": "「化石」と発言する。", "is_hidden": False},
@@ -86,7 +86,7 @@ ACHIEVEMENTS = {
     "ghost_story": {"name": "怪談は夏にお願いします", "description": "名前に「八尺」が含まれた状態で特定のメッセージを送る。", "is_hidden": False},
     "dice_hate": {"name": "僕らはダイスに嫌われている", "description": "ダイスでファンブル(96〜100)を2回連続で出す。", "is_hidden": False},
     "trash_same": {"name": "ゴミも同然♪", "description": "「無能」と言う。", "is_hidden": False},
-    
+    "deco_27": {"name": "ﾃﾞｯｺｫ", "description": "「ﾃﾞｯｺｫ」を含むテキストを送信。", "is_hidden": False},
 
     # ── 隠し実績 ──
     "black_history": {"name": "黒歴史", "description": "1分以内に3回自分の発言したメッセージを消す。", "is_hidden": True},

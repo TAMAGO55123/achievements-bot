@@ -245,6 +245,10 @@ class MessageTrackerCog(commands.Cog):
         if "ｺﾝｽｨｰﾔ" in content:
             await ach_cog.unlock_achievement(user, "folern", channel)
 
+        # 80 deco
+        if "ﾃﾞｯｺｫ" in content:
+            await ach_cog.unlock_achievement(user, "deco_27", channel)
+
         # 71: Happybirthday!!!!
         if "誕生日" in content:
             await ach_cog.unlock_achievement(user, "happy_birthday", channel)
