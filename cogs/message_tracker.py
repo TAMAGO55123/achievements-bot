@@ -167,7 +167,7 @@ class MessageTrackerCog(commands.Cog):
             await ach_cog.unlock_achievement(user, "i_know_nothing", channel)
 
         # 47: 神への反逆 (実績botへの返信)
-        if "@Acievements Bot" in content:
+        if "@Acievements bot" in content:
             await ach_cog.unlock_achievement(user, "rebellion_god", channel)
 
         # 48: たーまやー
