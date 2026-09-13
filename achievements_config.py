@@ -86,7 +86,7 @@ ACHIEVEMENTS = {
     "ghost_story": {"name": "怪談は夏にお願いします", "description": "名前に「八尺」が含まれた状態で特定のメッセージを送る。", "is_hidden": False},
     "dice_hate": {"name": "僕らはダイスに嫌われている", "description": "ダイスでファンブル(96〜100)を2回連続で出す。", "is_hidden": False},
     "trash_same": {"name": "ゴミも同然♪", "description": "「無能」と言う。", "is_hidden": False},
-    "deco_27": {"name": "ﾃﾞｯｺｫ", "description": "「ﾃﾞｯｺｫ」を含むテキストを送信。", "is_hidden": False},
+    "deco_27": {"name": "DECO*27", "description": "「ﾃﾞｯｺｫ」を含むテキストを送信。", "is_hidden": False},
 
     # ── 隠し実績 ──
     "black_history": {"name": "黒歴史", "description": "1分以内に3回自分の発言したメッセージを消す。", "is_hidden": True},
