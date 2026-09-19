@@ -185,12 +185,21 @@ class MessageTrackerCog(commands.Cog):
          if message.author.bot or not message.guild:
             return
 
-        # ボットがメンションされたかどうかを判定
-        if self.bot.user in message.mentions:
-            ach_cog = self.bot.get_cog("AchievementCog")
-            if ach_cog:
-                # メンションされたメッセージの送信者(message.author)に実績を付与
-                await ach_cog.unlock_achievement(message.author, "rebellion_god", message.channel)
+        # メッセージが何かしらへの「返信（リプライ）」であるかチェック
+        if message.reference and message.reference.message_id:
+            try:
+                # 返信元のメッセージを取得
+                ref_channel = message.guild.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
+                ref_message = await ref_channel.fetch_message(message.reference.message_id)
+
+                # 返信元のメッセージの作者が「自分（ボット自身）」である場合
+                if ref_message.author.id == self.bot.user.id:
+                    ach_cog = self.bot.get_cog("AchievementCog")
+                    if ach_cog:
+                        # 返信したユーザーに実績を解除
+                        await ach_cog.unlock_achievement(message.author, "rebellion_god", message.channel)
+            except Exception as e:
+                print(f"[DEBUG] Reply check error: {e}")
 
         # 48: たーまやー
         if "爆死" in content:
