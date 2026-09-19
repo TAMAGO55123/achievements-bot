@@ -128,6 +128,7 @@ class MessageTrackerCog(commands.Cog):
         # ストーカー判定用（返信の検知） & 神への反逆（ボットへの返信）
         target_is_bot = False
         if message.reference and message.reference.message_id:
+            print(f"[DEBUG] リプライを検知しました: ref_id={message.reference.message_id}")
             try:
                 target_msg = message.reference.cached_message
                 if not target_msg:
@@ -135,15 +136,20 @@ class MessageTrackerCog(commands.Cog):
                     target_msg = await ref_channel.fetch_message(message.reference.message_id)
                 
                 if target_msg and target_msg.author:
+                    print(f"[DEBUG] 返信先の作者: {target_msg.author} (Bot?: {target_msg.author.bot}, ID: {target_msg.author.id})")
+                    print(f"[DEBUG] 自ボットのID: {self.bot.user.id}")
+                    
                     if target_msg.author.bot:
                         target_is_bot = True
                         # 47: 神への反逆 (実績bot等の自分自身への返信)
                         if target_msg.author.id == self.bot.user.id:
+                            print("[DEBUG] -> 自ボットへの返信を確認！実績解除を試みます...")
                             await ach_cog.unlock_achievement(user, "rebellion_god", channel)
                     
                     await self.check_stalker(user, target_msg.author.id, channel)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[DEBUG ERROR] リプライ先の取得に失敗しました: {e}")
+                    
 
         # ── 連投王 (spam_king) の判定 ──
         if self.last_author_id == user.id:
