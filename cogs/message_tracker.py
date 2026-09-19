@@ -181,26 +181,28 @@ class MessageTrackerCog(commands.Cog):
 
         # 47: 神への反逆 (実績botへの返信)
         async def on_message(self, message: discord.Message):
-        # ボット自身のメッセージやDMは除外
+        # 1. ボット自身のメッセージやDMは除外されているか確認
          if message.author.bot or not message.guild:
             return
 
-        # 返信（リプライ）かどうかをチェック
+        # 2. 返信（リプライ）の判定が入っているか
         if message.reference and message.reference.message_id:
-            ref_message = message.reference.cached_message
-            if not ref_message:
-                try:
-                    # キャッシュにない場合はチャンネルを取得してメッセージをフェッチ
-                    ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
-                    ref_message = await ref_channel.fetch_message(message.reference.message_id)
-                except Exception:
-                    ref_message = None
+            print(f"[DEBUG] 返信を検知しました: {message.content} (送信者: {message.author})")
+            
+            try:
+                ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
+                ref_message = await ref_channel.fetch_message(message.reference.message_id)
 
-            # 返信元のメッセージが存在し、かつ送信者がボット自身である場合
-            if ref_message and ref_message.author.id == self.bot.user.id:
-                # このCog内なので直接 unlock_achievement を呼べます
-                await self.unlock_achievement(message.author, "rebellion_god", message.channel)
+                print(f"[DEBUG] 返信元メッセージの作者ID: {ref_message.author.id}, ボットのID: {self.bot.user.id}")
 
+                # 返信元のメッセージがボット自身の場合
+                if ref_message.author.id == self.bot.user.id:
+                    print("[DEBUG] ボットへの返信を確認！実績を解除します。")
+                    await self.unlock_achievement(message.author, "rebellion_god", message.channel)
+                else:
+                    print("[DEBUG] 返信先はボットではありませんでした。")
+            except Exception as e:
+                print(f"[ERROR] 返信メッセージの取得中にエラーが発生しました: {e}")
         # 48: たーまやー
         if "爆死" in content:
             await ach_cog.unlock_achievement(user, "tamaya", channel)
