@@ -125,16 +125,22 @@ class MessageTrackerCog(commands.Cog):
         if len(self.everyday_logs[user.id]) >= 100:
             await ach_cog.unlock_achievement(user, "everyday", channel)
 
-        # ストーカー判定用（返信の検知）
+        # ストーカー判定用（返信の検知） & 神への反逆（ボットへの返信）
         target_is_bot = False
         if message.reference and message.reference.message_id:
             try:
                 target_msg = message.reference.cached_message
                 if not target_msg:
-                    target_msg = await channel.fetch_message(message.reference.message_id)
+                    ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
+                    target_msg = await ref_channel.fetch_message(message.reference.message_id)
+                
                 if target_msg and target_msg.author:
                     if target_msg.author.bot:
                         target_is_bot = True
+                        # 47: 神への反逆 (実績bot等の自分自身への返信)
+                        if target_msg.author.id == self.bot.user.id:
+                            await ach_cog.unlock_achievement(user, "rebellion_god", channel)
+                    
                     await self.check_stalker(user, target_msg.author.id, channel)
             except Exception:
                 pass
@@ -179,30 +185,6 @@ class MessageTrackerCog(commands.Cog):
         if "知らない" in content:
             await ach_cog.unlock_achievement(user, "i_know_nothing", channel)
 
-        # 47: 神への反逆 (実績botへの返信)
-        async def on_message(self, message: discord.Message):
-        # 1. ボット自身のメッセージやDMは除外されているか確認
-         if message.author.bot or not message.guild:
-            return
-
-        # 2. 返信（リプライ）の判定が入っているか
-        if message.reference and message.reference.message_id:
-            print(f"[DEBUG] 返信を検知しました: {message.content} (送信者: {message.author})")
-            
-            try:
-                ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
-                ref_message = await ref_channel.fetch_message(message.reference.message_id)
-
-                print(f"[DEBUG] 返信元メッセージの作者ID: {ref_message.author.id}, ボットのID: {self.bot.user.id}")
-
-                # 返信元のメッセージがボット自身の場合
-                if ref_message.author.id == self.bot.user.id:
-                    print("[DEBUG] ボットへの返信を確認！実績を解除します。")
-                    await self.unlock_achievement(message.author, "rebellion_god", message.channel)
-                else:
-                    print("[DEBUG] 返信先はボットではありませんでした。")
-            except Exception as e:
-                print(f"[ERROR] 返信メッセージの取得中にエラーが発生しました: {e}")
         # 48: たーまやー
         if "爆死" in content:
             await ach_cog.unlock_achievement(user, "tamaya", channel)
