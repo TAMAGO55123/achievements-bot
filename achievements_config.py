@@ -87,6 +87,7 @@ ACHIEVEMENTS = {
     "dice_hate": {"name": "僕らはダイスに嫌われている", "description": "ダイスでファンブル(96〜100)を2回連続で出す。", "is_hidden": False},
     "trash_same": {"name": "ゴミも同然♪", "description": "「無能」と言う。", "is_hidden": False},
     "deco_27": {"name": "DECO*27", "description": "「ﾃﾞｯｺｫ」を含むテキストを送信。", "is_hidden": False},
+    "everyday": {"name": "いつもいる", "description": "24時間以内に100個のメッセージを送信する", "is_hidden": False},
 
     # ── 隠し実績 ──
     "black_history": {"name": "黒歴史", "description": "1分以内に3回自分の発言したメッセージを消す。", "is_hidden": True},

@@ -19,6 +19,9 @@ class MessageTrackerCog(commands.Cog):
         self.louder_logs = {}   # user_id: [timestamp, ...]
         self.osoyou_logs = {}   # user_id: date
         
+        # ── 追加: 「いつもいる」実績用のログ管理 ──
+        self.everyday_logs = {} # user_id: [timestamp, ...]
+        
         self.channel_activity = {}
 
         self.alcohol_keywords = ["酒", "ビール", "ストゼロ", "ハイボール", "酎ハイ", "ワイン"] 
@@ -112,19 +115,33 @@ class MessageTrackerCog(commands.Cog):
         if isinstance(channel, discord.Thread) and channel.parent_id:
             channel_id = channel.parent_id
 
+        # ── 「いつもいる」 (everyday) の判定 ──
+        if user.id not in self.everyday_logs:
+            self.everyday_logs[user.id] = []
+        # 過去24時間以内のタイムスタンプのみ残す
+        self.everyday_logs[user.id] = [t for t in self.everyday_logs[user.id] if now - t < timedelta(hours=24)]
+        self.everyday_logs[user.id].append(now)
+        
+        if len(self.everyday_logs[user.id]) >= 100:
+            await ach_cog.unlock_achievement(user, "everyday", channel)
+
+        # ── 神への反逆（ボットへのメンション） ──
+        if self.bot.user in message.mentions:
+            await ach_cog.unlock_achievement(user, "rebellion_god", channel)
+
         # ストーカー判定用（返信の検知）
-        target_is_bot = False
         if message.reference and message.reference.message_id:
+            print(f"[DEBUG] リプライを検知しました: ref_id={message.reference.message_id}")
             try:
                 target_msg = message.reference.cached_message
                 if not target_msg:
-                    target_msg = await channel.fetch_message(message.reference.message_id)
+                    ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
+                    target_msg = await ref_channel.fetch_message(message.reference.message_id)
+                
                 if target_msg and target_msg.author:
-                    if target_msg.author.bot:
-                        target_is_bot = True
                     await self.check_stalker(user, target_msg.author.id, channel)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[DEBUG ERROR] リプライ先の取得に失敗しました: {e}")
 
         # ── 連投王 (spam_king) の判定 ──
         if self.last_author_id == user.id:
@@ -165,10 +182,6 @@ class MessageTrackerCog(commands.Cog):
         # 46: 僕は何も知らない
         if "知らない" in content:
             await ach_cog.unlock_achievement(user, "i_know_nothing", channel)
-
-        # 47: 神への反逆 (実績botへの返信)
-        if "@Acievements bot" in content:
-            await ach_cog.unlock_achievement(user, "rebellion_god", channel)
 
         # 48: たーまやー
         if "爆死" in content:
