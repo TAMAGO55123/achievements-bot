@@ -1,4 +1,3 @@
-# cogs/voice_tracker.py
 import discord
 from discord.ext import commands
 from datetime import datetime
@@ -16,7 +15,7 @@ class VoiceTrackerCog(commands.Cog):
 
         now = datetime.now(ZoneInfo("Asia/Tokyo"))
 
-        # VC参加時
+        # VC参加時（チャンネルなし から チャンネルありへ）
         if before.channel is None and after.channel is not None:
             self.voice_sessions[member.id] = {
                 'time': now, 
@@ -27,14 +26,13 @@ class VoiceTrackerCog(commands.Cog):
             if 0 <= now.hour < 4:
                 ach_cog = self.bot.get_cog("AchievementCog")
                 if ach_cog:
-                    # 接続中のVCチャンネルを送信先にする（VCテキストチャット対応）
                     ch = after.channel or after.channel.guild.system_channel or (after.channel.guild.text_channels[0] if after.channel.guild.text_channels else None)
                     if ch:
                         await ach_cog.unlock_achievement(member, "midnight_talker", ch)
 
             # 63番：「8時だョ！全員集合」 (土曜日20時00分ちょうどにVCに6人以上いる状態)
             if now.weekday() == 5 and now.hour == 20 and now.minute == 0:
-                if len(after.channel.members) >= 6:
+                if after.channel and len(after.channel.members) >= 6:
                     ach_cog = self.bot.get_cog("AchievementCog")
                     if ach_cog:
                         ch = after.channel or after.channel.guild.system_channel or (after.channel.guild.text_channels[0] if after.channel.guild.text_channels else None)
@@ -43,14 +41,14 @@ class VoiceTrackerCog(commands.Cog):
                                 if not m.bot:
                                     await ach_cog.unlock_achievement(m, "everyone_8pm", ch)
 
-        # VC状態変更時（ミュートを解除したらフラグをFalseにする）
+        # VC状態変更時（ミュート状態の更新など）
         elif before.channel is not None and after.channel is not None:
             if member.id in self.voice_sessions:
                 current_mute = after.self_mute or after.mute
                 if not current_mute:
                     self.voice_sessions[member.id]['mute'] = False
 
-        # VC退出時（退出時は直前にいた before.channel を参照）
+        # VC退出時（チャンネルあり から チャンネルなしへ）
         elif before.channel is not None and after.channel is None:
             if member.id in self.voice_sessions:
                 session = self.voice_sessions.pop(member.id)
@@ -58,7 +56,7 @@ class VoiceTrackerCog(commands.Cog):
                 guild = before.channel.guild
                 target_ch = before.channel
 
-                # 5番：「主食はマイク」 (累計24時間用データベース加算)
+                # 5番：「主食はマイク」 (累計時間用データベース加算)
                 await self.add_voice_time(member, duration, guild, target_ch)
 
                 ach_cog = self.bot.get_cog("AchievementCog")
@@ -66,7 +64,7 @@ class VoiceTrackerCog(commands.Cog):
                     ch = target_ch or guild.system_channel or (guild.text_channels[0] if guild.text_channels else None)
                     if ch:
                         # 24番：「サイレントサポーター」 (ずっとミュートのまま1時間=3600秒VC接続)
-                        if session['mute'] and duration >= 3600:
+                        if session['mute'] and duration >= 3600 and duration < 7200:
                             await ach_cog.unlock_achievement(member, "silent_supporter", ch)
 
                         # 62番：「CV未実装」 (ずっとミュートのまま2時間=7200秒VC接続)

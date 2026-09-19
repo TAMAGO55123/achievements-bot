@@ -19,6 +19,9 @@ class MessageTrackerCog(commands.Cog):
         self.louder_logs = {}   # user_id: [timestamp, ...]
         self.osoyou_logs = {}   # user_id: date
         
+        # ── 追加: 「いつもいる」実績用のログ管理 ──
+        self.everyday_logs = {} # user_id: [timestamp, ...]
+        
         self.channel_activity = {}
 
         self.alcohol_keywords = ["酒", "ビール", "ストゼロ", "ハイボール", "酎ハイ", "ワイン"] 
@@ -112,6 +115,16 @@ class MessageTrackerCog(commands.Cog):
         if isinstance(channel, discord.Thread) and channel.parent_id:
             channel_id = channel.parent_id
 
+        # ── 「いつもいる」 (everyday) の判定 ──
+        if user.id not in self.everyday_logs:
+            self.everyday_logs[user.id] = []
+        # 過去24時間以内のタイムスタンプのみ残す
+        self.everyday_logs[user.id] = [t for t in self.everyday_logs[user.id] if now - t < timedelta(hours=24)]
+        self.everyday_logs[user.id].append(now)
+        
+        if len(self.everyday_logs[user.id]) >= 100:
+            await ach_cog.unlock_achievement(user, "everyday", channel)
+
         # ストーカー判定用（返信の検知）
         target_is_bot = False
         if message.reference and message.reference.message_id:
@@ -167,7 +180,7 @@ class MessageTrackerCog(commands.Cog):
             await ach_cog.unlock_achievement(user, "i_know_nothing", channel)
 
         # 47: 神への反逆 (実績botへの返信)
-        if "@Acievements bot" in content:
+        if "@Achievements bot" in content:
             await ach_cog.unlock_achievement(user, "rebellion_god", channel)
 
         # 48: たーまやー

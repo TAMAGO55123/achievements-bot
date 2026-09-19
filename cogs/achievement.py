@@ -5,6 +5,7 @@ from discord import app_commands
 from achievements_config import ACHIEVEMENTS
 
 TARGET_CHANNEL_ID = 1548314106963042314
+PERMANENT_LOG_CHANNEL_ID = 1550838877328244756  # ⚠️ここに「消えない実績ログ」を送りたい別のチャンネルIDを設定してください
 
 class AchievementPaginationView(discord.ui.View):
     def __init__(self, embed_list, interaction: discord.Interaction):
@@ -72,7 +73,7 @@ class AchievementCog(commands.Cog):
                 member.id, achievement_id
             )
 
-        # 解除時の通知メッセージ
+        # 解除時の通知メッセージ（既存：サイレント通知付き＆60秒で自動削除）
         ach_info = ACHIEVEMENTS[achievement_id]
         embed = discord.Embed(
             title=f" 実績解除「{ach_info['name']}」",
@@ -80,9 +81,26 @@ class AchievementCog(commands.Cog):
             color=discord.Color.gold()
         )
         try:
-            await channel.send(embed=embed, delete_after=60)
+            # silent=True を追加して通知音を鳴らさないように設定
+            await channel.send(embed=embed, delete_after=60, silent=True)
         except Exception:
             pass
+
+        # 別チャンネルへ「消えない実績ログ」を送る処理
+        try:
+            permanent_channel = self.bot.get_channel(PERMANENT_LOG_CHANNEL_ID)
+            if permanent_channel:
+                perm_embed = discord.Embed(
+                    title=f"📜 実績解除ログ「{ach_info['name']}」",
+                    description=f"**ユーザー:** {member.mention} ({member.display_name})\n**解除条件:** {ach_info['description']}",
+                    color=discord.Color.green(),
+                    timestamp=discord.utils.utcnow()
+                )
+                perm_embed.set_thumbnail(url=member.display_avatar.url)
+                # 削除せずに残す（delete_afterを設定しない）、また必要に応じて silent=True にすることも可能
+                await permanent_channel.send(embed=perm_embed, silent=True)
+        except Exception as e:
+            print(f"[DEBUG] Failed to send permanent log: {e}")
 
         # 隠し実績の連鎖解除判定（自身がメタ実績の場合は無限ループ防止のためスキップ）
         if achievement_id not in ["all_unlock_q", "you_lose"]:
@@ -237,6 +255,76 @@ class AchievementCog(commands.Cog):
             color=discord.Color.gold()
         )
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="admin_ach_users", description="【管理者限定】指定した実績を達成しているユーザーの一覧を表示します")
+    @app_commands.describe(achievement_id="確認したい実績のID")
+    @app_commands.autocomplete(achievement_id=achievement_id_autocomplete)
+    async def admin_ach_users(self, interaction: discord.Interaction, achievement_id: str):
+        # ランキングから除外されている管理者（実行可能ユーザー）のIDリスト
+        excluded_user_ids = [
+            1048754537051193364,
+            1325437904905965626,
+            1126688744364331029,
+            962589720498552862,
+            1225220580668739694,
+            1151824696313122927,
+            1476164769340981390,
+            1499930029579174008
+        ]
+
+        # 実行者が管理者リストに含まれているかチェック
+        if interaction.user.id not in excluded_user_ids:
+            await interaction.response.send_message("❌ エラー: このコマンドを実行する権限がありません。", ephemeral=True)
+            return
+
+        # 実績IDの存在チェック
+        if achievement_id not in ACHIEVEMENTS:
+            await interaction.response.send_message(f"エラー: `{achievement_id}` という実績IDは存在しません。", ephemeral=True)
+            return
+
+        ach_info = ACHIEVEMENTS[achievement_id]
+
+        # データベースから該当実績を解除しているユーザーIDを取得
+        async with self.bot.db.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT user_id FROM user_achievements WHERE achievement_id = $1",
+                achievement_id
+            )
+
+        if not rows:
+            await interaction.response.send_message(f"実績 **「{ach_info['name']}」** を解除しているユーザーはまだいません。", ephemeral=True)
+            return
+
+        # ユーザー名のリストを作成
+        user_lines = []
+        for row in rows:
+            user_id = row["user_id"]
+            member = interaction.guild.get_member(user_id)
+            if member:
+                user_lines.append(f"• {member.mention} ({member.display_name})")
+            else:
+                user_lines.append(f"• <@{user_id}> (ID: {user_id})")
+
+        # 1ページあたり10人ずつに分割
+        chunk_size = 10
+        chunks = [user_lines[i:i + chunk_size] for i in range(0, len(user_lines), chunk_size)]
+
+        embed_list = []
+        for idx, chunk in enumerate(chunks):
+            embed = discord.Embed(
+                title=f"📋 実績達成者一覧: 「{ach_info['name']}」",
+                description=f"**条件:** {ach_info['description']}\n**達成人数:** {len(user_lines)}人\n\n" + "\n".join(chunk),
+                color=discord.Color.green()
+            )
+            embed.set_footer(text=f"ページ {idx + 1} / {len(chunks)}")
+            embed_list.append(embed)
+
+        if len(embed_list) == 1:
+            await interaction.response.send_message(embed=embed_list[0], ephemeral=True)
+        else:
+            view = AchievementPaginationView(embed_list, interaction)
+            view.update_buttons()
+            await interaction.response.send_message(embed=embed_list[0], view=view, ephemeral=True)
 
     @app_commands.command(name="admin_give", description="【オーナー限定】指定したユーザーに実績を付与、または剥奪します")
     @app_commands.describe(

@@ -106,7 +106,7 @@ class AchievementBot(commands.Bot):
     async def on_ready(self):
         # ログイン完了のログ出力とカスタムステータス設定をまとめる
         print(f"✨ ログイン完了: {self.user} (ID: {self.user.id})")
-        await self.change_presence(activity=discord.CustomActivity(name="ver.1.2.0"))
+        await self.change_presence(activity=discord.CustomActivity(name="ver.1.2.1"))
 
 # ボットの起動
 if __name__ == "__main__":
