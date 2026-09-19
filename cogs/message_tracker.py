@@ -185,21 +185,21 @@ class MessageTrackerCog(commands.Cog):
          if message.author.bot or not message.guild:
             return
 
-        # メッセージが何かしらへの「返信（リプライ）」であるかチェック
+        # 返信（リプライ）かどうかをチェック
         if message.reference and message.reference.message_id:
-            try:
-                # 返信元のメッセージを取得
-                ref_channel = message.guild.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
-                ref_message = await ref_channel.fetch_message(message.reference.message_id)
+            ref_message = message.reference.cached_message
+            if not ref_message:
+                try:
+                    # キャッシュにない場合はチャンネルを取得してメッセージをフェッチ
+                    ref_channel = self.bot.get_channel(message.reference.channel_id) or await message.guild.fetch_channel(message.reference.channel_id)
+                    ref_message = await ref_channel.fetch_message(message.reference.message_id)
+                except Exception:
+                    ref_message = None
 
-                # 返信元のメッセージの作者が「自分（ボット自身）」である場合
-                if ref_message.author.id == self.bot.user.id:
-                    ach_cog = self.bot.get_cog("AchievementCog")
-                    if ach_cog:
-                        # 返信したユーザーに実績を解除
-                        await ach_cog.unlock_achievement(message.author, "rebellion_god", message.channel)
-            except Exception as e:
-                print(f"[DEBUG] Reply check error: {e}")
+            # 返信元のメッセージが存在し、かつ送信者がボット自身である場合
+            if ref_message and ref_message.author.id == self.bot.user.id:
+                # このCog内なので直接 unlock_achievement を呼べます
+                await self.unlock_achievement(message.author, "rebellion_god", message.channel)
 
         # 48: たーまやー
         if "爆死" in content:
