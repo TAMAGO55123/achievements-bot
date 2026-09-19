@@ -180,8 +180,17 @@ class MessageTrackerCog(commands.Cog):
             await ach_cog.unlock_achievement(user, "i_know_nothing", channel)
 
         # 47: 神への反逆 (実績botへの返信)
-        if "@Achievement bot" in content:
-            await ach_cog.unlock_achievement(user, "rebellion_god", channel)
+        async def on_message(self, message: discord.Message):
+        # ボット自身のメッセージやDMは除外
+         if message.author.bot or not message.guild:
+            return
+
+        # ボットがメンションされたかどうかを判定
+        if self.bot.user in message.mentions:
+            ach_cog = self.bot.get_cog("AchievementCog")
+            if ach_cog:
+                # メンションされたメッセージの送信者(message.author)に実績を付与
+                await ach_cog.unlock_achievement(message.author, "rebellion_god", message.channel)
 
         # 48: たーまやー
         if "爆死" in content:
